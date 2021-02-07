@@ -34,18 +34,22 @@ void usb_dev_reset(usb_dev_t *usbd)
 {
     usbd->driver->set_address(usbd->driver, 0);
 
+    int ep0_max_pkt_size = 0;
+    #define BMAXPACKETSIZE0_OFFSET 7
+    ep0_max_pkt_size = usbd->device_descriptor.data[BMAXPACKETSIZE0_OFFSET];
+
     memset(usbd->ep, 0, sizeof(usbd->ep));
     int addr = ENDPOINT_ADDRESS(0, HOST_OUT);
     usbd->ep[addr].direction = HOST_OUT;
     usbd->ep[addr].number = 0;
     usbd->ep[addr].type = CONTROL_ENDPOINT;
-    usbd->ep[addr].max_pkt_data_size = 64;
+    usbd->ep[addr].max_pkt_data_size = ep0_max_pkt_size;
     usbd->ep[addr].enable = 1;
     addr = ENDPOINT_ADDRESS(0, HOST_IN);
     usbd->ep[addr].direction = HOST_IN;
     usbd->ep[addr].number = 0;
     usbd->ep[addr].type = CONTROL_ENDPOINT;
-    usbd->ep[addr].max_pkt_data_size = 64;
+    usbd->ep[addr].max_pkt_data_size = ep0_max_pkt_size;
     usbd->ep[addr].enable = 1;
     usbd->endpoint_callback[0] = control_transfer;
 
