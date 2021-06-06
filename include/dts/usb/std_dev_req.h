@@ -24,13 +24,19 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#ifndef STD_DEV_REQ_H_
+#define STD_DEV_REQ_H_
 
-#include <dts_usb_com_dev_line_coding.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
+void dts_usb_priv_std_dev_req
+(
+    usb_dev_t *usbd, 
+    usb_endpoint_t *ep, 
+    usb_dev_req_t *req
+);
 
-#endif // LINE_CODING_H_
+#define std_dev_req dts_usb_priv_std_dev_req
+
+#endif // STD_DEV_REQ_H_

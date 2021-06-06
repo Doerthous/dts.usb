@@ -24,13 +24,40 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#include <dts/usb/com_dev/line_coding.h>
 
-#include <dts_usb_com_dev_line_coding.h>
+#define usb_to_cpu_u32(buff, pu32) do \
+{ \
+    *(pu32) = (((buff)[0]) \
+                | ((buff)[1] << 8) \
+                | ((buff)[2]<<16) \
+                | ((buff)[3]<<24)); \
+} while (0)
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
+#define cpu_to_usb_u32(u32, buff) do \
+{ \
+    (buff)[0] = (u32); \
+    (buff)[1] = (u32)>>8; \
+    (buff)[2] = (u32)>>16; \
+    (buff)[3] = (u32)>>24; \
+} while (0)
 
-#endif // LINE_CODING_H_
+int line_coding_unpack(line_coding_t *coding)
+{
+    usb_to_cpu_u32(coding->raw_data, &coding->dwDTERate);
+    coding->bCharFormat = coding->raw_data[4];
+    coding->bParityType = coding->raw_data[5];
+    coding->bDataBits = coding->raw_data[6];
+
+    return 1;
+}
+
+int line_coding_pack(line_coding_t *coding)
+{
+    cpu_to_usb_u32(coding->dwDTERate, coding->raw_data);
+    coding->raw_data[4] = coding->bCharFormat;
+    coding->raw_data[5] = coding->bParityType;
+    coding->raw_data[6] = coding->bDataBits;
+
+    return 1;
+}

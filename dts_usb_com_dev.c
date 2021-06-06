@@ -24,11 +24,14 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#include <dts/usb/usb.h>
-#include <dts/usb/usb_dev.h>
-#include <dts/usb/dev/control_transfer.h>
-#include <dts/usb/usb_com_dev.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
+#include <dts/usb/control_transfer.h>
+#include <dts/usb_com_dev.h>
 #include <dts/usb/com_dev/line_coding.h>
+#include <dts/usb/misc.h>
+
+#define to_com_dev(usb) ((usb_com_dev_t *)usb)
 
 enum cdc_req_code
 {
@@ -41,11 +44,15 @@ enum cdc_req_code
     GET_LINE_PARMS = 0x35, // [USBPSTN1.2]
 };
 
-static uint8_t data_out[32];
-static size_t data_out_size;
-static void data_out_completed(usb_dev_t *usbd, usb_endpoint_t *ep)
+
+static void line_coding_received(usb_dev_t *usbd, usb_endpoint_t *ep)
 {
-    control_transfer_do_status_in(usbd, ep);
+    usb_com_dev_t *usbcd = (usb_com_dev_t *)usbd;
+
+    if (line_coding_unpack(&usbcd->u.line_coding)) {
+        event_set(&usbcd->event.pstn, PSTN_EVENT_LINE_CODING_CHANGED);
+    }
+    ctrl_xfer_ack(usbd, ep);
 }
 void usb_com_dev_received
 (
@@ -54,20 +61,22 @@ void usb_com_dev_received
     usb_dev_req_t *req
 )
 {
-    usb_com_dev_t *usbcd = (usb_com_dev_t *)usbd;
+    usb_com_dev_t *usbcd = to_com_dev(usbd);
 
     switch (req->bRequest) {
         case SET_LINE_CODING: {
-            data_out_size = req->wLength;
-            control_transfer_do_data_out(usbd, ep, data_out, req->wLength);
-            usbd->data_out_completed = data_out_completed;
+            ctrl_xfer_set_read_callback(usbd, ep, line_coding_received);
+            ctrl_xfer_read(usbd, ep, 
+                usbcd->u.line_coding.raw_data, req->wLength);
         } break;
         case GET_LINE_CODING: {
-            control_transfer_do_data_in(usbd, ep, (uint8_t*)usbcd->line_coding, 
-                sizeof(line_coding_t));
+            #define LINE_CODING_SIZE 7
+            line_coding_pack(&usbcd->u.line_coding);
+            ctrl_xfer_write(usbd, ep, 
+                usbcd->u.line_coding.raw_data, LINE_CODING_SIZE);
         } break;
         case SET_CONTROL_LINE_STATE: {
-            control_transfer_do_status_in(usbd, ep);
+            ctrl_xfer_ack(usbd, ep);
         } break;
         case SET_OPERATION_PARMS: {
         } break;

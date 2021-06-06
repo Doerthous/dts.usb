@@ -1,9 +1,9 @@
 #include "usb_desc.h"
 
-#include <dts/usb/usb.h>
-#include <dts/usb/usb_dev.h>
-#include <dts/usb/usb_com_dev.h>
-#include <dts/usb/com_dev/line_coding.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
+#include <dts/usb_com_dev.h>
+#include <dts/usb/bulk_transfer.h>
 
 usb_descriptor_t conf_desc =
 {
@@ -18,35 +18,33 @@ usb_descriptor_t string_descriptor[4] =
     {(uint8_t*)Virtual_Com_Port_StringSerial, VIRTUAL_COM_PORT_SIZ_STRING_SERIAL}
 };
 
-static line_coding_t uart_conf = {
-    .dwDTERate = 9600,
-    .bCharFormat = 1,
-    .bParityType = 0,
-    .bDataBits = 8,
-};
 static void interrupt_in(usb_dev_t *usbd, usb_endpoint_t *ep)
 {
 	ep->number = ep->number;
 }
-static void bulk_in(usb_dev_t *usbd, usb_endpoint_t *ep)
-{
-	ep->number = ep->number;
-}
-static void bulk_out(usb_dev_t *usbd, usb_endpoint_t *ep)
+#if 0
+static void read_notifier(usb_dev_t *usb, int ep)
 {
     uint8_t buff[64];
     size_t size;
 
-    // echo back
-    size = usbd->driver->ep_read(ep, buff, 64);
-    ep = usb_dev_get_endpoint(usbd, 1, HOST_IN); // IN
-    size = usbd->driver->ep_write(ep, buff, size);
+	size = bulk_read(usb, ep, buff, 64);
+	bulk_write(usb, 1, buff, 1);
 }
+static void write_callback(usb_dev_t *usb, int ep)
+{
+	static uint8_t buff[4096];
+	bulk_write(usb, ep, buff, 4096);
+}
+#endif
 static void set_configuration(usb_dev_t *usbd, int conf)
 {
-    usbd->endpoint_callback[1] = bulk_in;
+	//bulk_set_in_endpoint(usbd, 1, write_callback);
     usbd->endpoint_callback[2] = interrupt_in;
-    usbd->endpoint_callback[3] = bulk_out;
+    //bulk_set_out_endpoint(usbd, 3, read_notifier);
+	
+	bulk_set_in_endpoint(usbd, 1, NULL);
+    bulk_set_out_endpoint(usbd, 3, NULL);
 }
 
 void stm32f10x_usb_device_init(usb_dev_t *usbd);
@@ -63,5 +61,10 @@ usb_com_dev_t usb_com_dev =
     .dev.string_descriptor_count = 4,
     .dev.class_device_request = usb_com_dev_received,
     .dev.set_configuration = set_configuration,
-    .line_coding = &uart_conf,
+    .u.line_coding = {
+		.dwDTERate = 9600,
+		.bCharFormat = 1,
+		.bParityType = 0,
+		.bDataBits = 8,
+	},
 };

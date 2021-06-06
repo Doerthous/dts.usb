@@ -42,7 +42,10 @@ typedef struct
 { 
     uint8_t state; 
     uint8_t *data; 
-    size_t size; 
+    size_t size;
+
+    // 1. use as high level callback in bulk transfer
+    void *priv;
 } dts_usb_transfer_t;
 
 typedef struct

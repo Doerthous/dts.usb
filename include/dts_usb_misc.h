@@ -24,13 +24,14 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#ifndef DTS_USB_MISC_H_
+#define DTS_USB_MISC_H_
 
-#include <dts_usb_com_dev_line_coding.h>
+#define DTS_USB_EVENT_ALL 0xFFFFFFFF
+#define dts_usb_event_t uint32_t
+#define dts_usb_event_set(event_obj, event) *(event_obj) |= (event)
+#define dts_usb_event_clear(event_obj, event) *(event_obj) &= ~(event);
+#define dts_usb_event_test(event_obj, event) (*(event_obj) & (event))
+#define dts_usb_event_wait(event_obj, event_set) (*(event_obj) & event_set)
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
-
-#endif // LINE_CODING_H_
+#endif // DTS_USB_MISC_H_

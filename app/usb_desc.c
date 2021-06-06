@@ -41,7 +41,7 @@ uint8_t Virtual_Com_Port_DeviceDescriptor[] =
     0x00,   /* bDeviceProtocol */
     0x40,   /* bMaxPacketSize0 */
     0x83,
-    0x04,   /* idVendor = 0x0483 */
+    0x14,   /* idVendor = 0x0483 */
     0x40,
     0x57,   /* idProduct = 0x7540 */
     0x00,

@@ -24,13 +24,12 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#include <dts/usb/usb.h>
-#include <dts/usb/usb_dev.h>
-#include <dts/usb/dev/control_transfer.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
+#include <dts/usb/control_transfer.h>
+#include <dts/usb/std_dev_req.h>
 
 //## Internal function
-#define low_byte(word) ((word) & 0xFF)
-#define high_byte(word) (((word) & 0xFF00) >> 8)
 static int usb_dev_req_unpack(usb_dev_req_t *req) 
 {
     uint8_t *ptr = req->raw_data;
@@ -69,161 +68,6 @@ static int transaction_data_process(usb_dev_t *usbd, usb_endpoint_t *ep)
     }
     return usbd->transfer[ep->number].size > 0;
 }
-static int set_configuration(usb_dev_t *usbd, int idx)
-{
-    // parser configuration
-    uint8_t *conf;
-    size_t conf_size;
-    
-    for (int i = 0; i < usbd->conf_descriptor_count; ++i) {
-        conf = usbd->conf_descriptor[i].data;
-        conf_size = usbd->conf_descriptor[i].size;
-        #define CONFIG_VALUE_OFFSET 5
-        if (conf[CONFIG_VALUE_OFFSET] == idx) {
-            break;
-        }
-        conf = NULL;
-    }
-    if (conf == NULL) {
-        if (idx == 0) {
-            conf = usbd->conf_descriptor[0].data;
-            conf_size = usbd->conf_descriptor[0].size;
-        }
-        else {
-            return 0;
-        }
-    }
-
-    for (int i = 0; i < conf_size;) {
-        struct {
-            uint8_t len;
-            uint8_t desc_type;
-            uint8_t num:4; uint8_t :3; uint8_t dir:1;
-            uint8_t type:2; uint8_t :6;
-            uint16_t max_pkt_sz;
-        } * ep_desc = (void *)(conf+i);
-        uint8_t type_map[] = {
-            CONTROL_ENDPOINT,
-            ISOCHRONOUS_ENDPOINT,
-            BULK_ENDPOINT,
-            INTERRUPT_ENDPOINT,
-        };
-        if (ep_desc->desc_type == 0x05) { // Endpoint descriptor
-            int addr = ENDPOINT_ADDRESS(ep_desc->num, ep_desc->dir);
-            usbd->ep[addr].direction = ep_desc->dir;
-            usbd->ep[addr].number = ep_desc->num;
-            usbd->ep[addr].type = type_map[ep_desc->type];
-            usbd->ep[addr].max_pkt_data_size = ep_desc->max_pkt_sz;
-            usbd->ep[addr].enable = 1;
-        }
-        i += ep_desc->len;
-    }
-    
-    usbd->driver->ep_init(usbd);
-
-    return 1;
-}
-
-//## Standard descriptor
-enum std_desc_type
-{
-    DEVICE = 1,
-    CONFIGURATION = 2,
-    STRING = 3,
-    INTERFACE = 4,
-    ENDPOINT = 5,
-    DEVICE_QUALIFIER = 6,
-    OTHER_SPEED_CONFIGURATION = 7,
-    INTERFACE_POWER1 = 8,
-};
-
-//## Standard device request
-//### bRequest
-enum std_req_code
-{
-    GET_STATUS = 0,
-    CLEAR_FEATURE = 1,
-    SET_FEATURE = 3,
-    SET_ADDRESS = 5,
-    GET_DESCRIPTOR = 6,
-    SET_DESCRIPTOR = 7,
-    GET_CONFIGURATION = 8,
-    SET_CONFIGURATION = 9,
-    GET_INTERFACE = 10,
-    SET_INTERFACE = 11,
-};
-
-//### handle
-void standard_device_request
-(
-    usb_dev_t *usbd, 
-    usb_endpoint_t *ep, 
-    usb_dev_req_t *req
-)
-{
-    switch (req->bRequest) {
-        case GET_STATUS: {
-        } break;
-        case CLEAR_FEATURE: {
-        } break;
-        case SET_FEATURE: {
-        } break;
-        case SET_ADDRESS: {
-            control_transfer_do_status_in(usbd, ep);
-            usbd->driver->set_address(usbd->driver, 
-                req->wValue);
-        } break;
-        case GET_DESCRIPTOR: {
-            uint8_t type = high_byte(req->wValue);
-            uint8_t index = low_byte(req->wValue);
-            uint8_t langid = req->wIndex;
-            switch (type) {
-                case DEVICE: {
-                    control_transfer_do_data_in(usbd, ep,
-                        usbd->device_descriptor.data,
-                        usbd->device_descriptor.size);
-                } break;
-                case CONFIGURATION: {
-                    if (usbd->conf_descriptor[index].size < req->wLength) {
-                        req->wLength = usbd->conf_descriptor[index].size;
-                    }
-                    control_transfer_do_data_in(usbd, ep,
-                        usbd->conf_descriptor[index].data,
-                        req->wLength);
-                } break;
-                case STRING: {
-                    control_transfer_do_data_in(usbd, ep,
-                        usbd->string_descriptor[index].data,
-                        usbd->string_descriptor[index].size);
-                } break;
-                default: {
-                    uint8_t fake[512];
-                    ep = usb_dev_get_endpoint(usbd, ep->number, HOST_IN); // IN
-                    usbd->driver->ep_write(ep, fake, req->wLength);
-                } break;
-            }
-        } break;
-        case SET_DESCRIPTOR: {
-        } break;
-        case GET_CONFIGURATION: {
-        } break;
-        case SET_CONFIGURATION: {
-            uint8_t index = low_byte(req->wValue);
-            if (set_configuration(usbd, index)) {
-                usbd->set_configuration(usbd, index);
-                control_transfer_do_status_in(usbd, ep);
-            }
-        } break;
-        case GET_INTERFACE: {
-        } break;
-        case SET_INTERFACE: {
-        } break;
-        default: {
-            // Not support
-            return;
-        }
-    }
-}
 
 //## Control transfer state machine
 //### Control transfer states
@@ -261,9 +105,8 @@ void control_transfer(usb_dev_t *usbd, usb_endpoint_t *ep)
 //### Control transfer actions
 void control_transfer_do_status_in(usb_dev_t *usbd, usb_endpoint_t *ep)
 {
-    uint8_t z = 0;
     ep = usb_dev_get_endpoint(usbd, ep->number, HOST_IN); // IN
-    usbd->driver->ep_write(ep, &z, 0);
+    usbd->driver->ep_write(ep, 0, 0);
 }
 void control_transfer_do_data_in
 (
@@ -292,33 +135,39 @@ void control_transfer_do_data_out
 //### Control transfer events
 void control_transfer_in(usb_dev_t *usbd, usb_endpoint_t *ep)
 {
-    ep = usb_dev_get_endpoint(usbd, ep->number, HOST_IN); // IN
-    switch (usbd->transfer[ep->number].state) {
+    usb_transfer_t *xfer;
+    ep = usb_dev_get_endpoint(usbd, ep->number, HOST_IN);
+    xfer = &usbd->transfer[ep->number];
+
+    switch (xfer->state) {
         // Host in
         case CT_STATE_WAIT_DATA_IN: {
             if (!transaction_data_process(usbd, ep)) {
-                usbd->transfer[ep->number].state = CT_STATE_WAIT_STATUS_OUT;
+                xfer->state = CT_STATE_WAIT_STATUS_OUT;
             }
         } break;
         case CT_STATE_WAIT_STATUS_IN: {
-            usbd->transfer[ep->number].state = CT_STATE_WAIT_SETUP;
-            void (*data_out_completed)(usb_dev_t *usbd, usb_endpoint_t *ep);
-            data_out_completed = usbd->data_out_completed;
-            usbd->data_out_completed = NULL;
-            if (data_out_completed) {
-                data_out_completed(usbd, ep);
+            xfer->state = CT_STATE_WAIT_SETUP;
+            ctrl_xfer_callback_t callback;
+            callback = (ctrl_xfer_callback_t)xfer->priv;
+            if (callback) {
+                xfer->priv = NULL;
+                callback(usbd, ep);
             }
         } break;
     }
 }
 void control_transfer_out1(usb_dev_t *usbd, usb_endpoint_t *ep)
 {
-    ep = usb_dev_get_endpoint(usbd, ep->number, HOST_OUT); // IN
-    switch (usbd->transfer[ep->number].state) {
+    usb_transfer_t *xfer;
+    ep = usb_dev_get_endpoint(usbd, ep->number, HOST_OUT);
+    xfer = &usbd->transfer[ep->number];
+
+    switch (xfer->state) {
         // Host out
         case CT_STATE_WAIT_DATA_OUT: {
             if (!transaction_data_process(usbd, ep)) {
-                usbd->transfer[ep->number].state = CT_STATE_WAIT_STATUS_IN;
+                xfer->state = CT_STATE_WAIT_STATUS_IN;
 
                 /*
                     fake event, in order to prepare tx data before received in 
@@ -337,12 +186,12 @@ void control_transfer_out1(usb_dev_t *usbd, usb_endpoint_t *ep)
             size_t size = 16;
             size = usbd->driver->ep_read(ep, buff, size);
             if (size == 0) {
-                usbd->transfer[ep->number].state = CT_STATE_WAIT_SETUP;
-                void (*data_in_completed)(usb_dev_t *usbd, usb_endpoint_t *ep);
-                data_in_completed = usbd->data_in_completed;
-                usbd->data_in_completed = NULL;
-                if (data_in_completed) {
-                    data_in_completed(usbd, ep);
+                xfer->state = CT_STATE_WAIT_SETUP;
+                ctrl_xfer_callback_t callback;
+                callback = (ctrl_xfer_callback_t)xfer->priv;
+                if (callback) {
+                    xfer->priv = NULL;
+                    callback(usbd, ep);
                 }
             }
         } break;
@@ -362,7 +211,7 @@ void control_transfer_setup1(usb_dev_t *usbd, usb_endpoint_t *ep)
                 if (usb_dev_req_unpack(&dev_req)) {
                     do {
                         if (USB_STD_DEV_REQ(&dev_req)) {
-                            standard_device_request(usbd, ep, &dev_req);
+                            std_dev_req(usbd, ep, &dev_req);
                             break;
                         }
                         if (USB_CLS_DEV_REQ(&dev_req)) {

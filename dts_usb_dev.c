@@ -24,9 +24,9 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#include <dts/usb/usb.h>
-#include <dts/usb/usb_dev.h>
-#include <dts/usb/dev/control_transfer.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
+#include <dts/usb/control_transfer.h>
 
 // event
 #include <string.h>

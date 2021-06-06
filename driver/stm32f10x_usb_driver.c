@@ -25,8 +25,8 @@
 */
 
 #include <usb_lib.h> // require only usb_regs.c and usb_mem.c
-#include <dts/usb/usb.h>
-#include <dts/usb/usb_dev.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
 
 /* How to use:
 
@@ -224,10 +224,10 @@ void stm32f10x_usb_device_init(usb_dev_t *usbd)
     _SetISTR(0);
     w_int_mask = (CNTR_CTRM
                     | CNTR_WKUPM
-                    | CNTR_SUSPM
+                    //| CNTR_SUSPM
                     | CNTR_ERRM
-                    | CNTR_SOFM
-                    | CNTR_ESOFM 
+                    //| CNTR_SOFM
+                    //| CNTR_ESOFM 
                     | CNTR_RESETM 
                     );
     _SetCNTR(w_int_mask);

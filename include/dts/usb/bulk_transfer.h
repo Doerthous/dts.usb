@@ -24,54 +24,20 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef DTS_USB_DEV_CONTROL_TRANSFER_H_
-#define DTS_USB_DEV_CONTROL_TRANSFER_H_
+#ifndef BULK_TRANSFER_H_
+#define BULK_TRANSFER_H_
 
-#include <dts_usb.h>
-#include <dts_usb_dev.h>
+#include <dts_usb_bulk_transfer.h>
+#include <dts/usb.h>
+#include <dts/usb_dev.h>
 
-void dts_usb_dev_control_transfer
-(
-    dts_usb_dev_t *usbd, 
-    dts_usb_endpoint_t *ep
-);
+#define bulk_transfer dts_usb_bulk_transfer
 
-// Actions
-void dts_usb_dev_control_transfer_do_status_in
-(
-    dts_usb_dev_t *usbd,
-    dts_usb_endpoint_t *ep
-);
-void dts_usb_dev_control_transfer_do_data_in
-(
-    dts_usb_dev_t *usbd,
-    dts_usb_endpoint_t *ep,
-    uint8_t *data,
-    size_t size
-);
-void dts_usb_dev_control_transfer_do_data_out
-(
-    dts_usb_dev_t *usbd, 
-    dts_usb_endpoint_t *ep,
-    uint8_t *buff, 
-    size_t size
-);
+#define bulk_write dts_usb_bulk_write
+#define bulk_read dts_usb_bulk_read
 
-// Events
-void dts_usb_dev_control_transfer_in
-(
-    dts_usb_dev_t *usbd, 
-    dts_usb_endpoint_t *ep
-);
-void dts_usb_dev_control_transfer_out1
-(
-    dts_usb_dev_t *usbd, 
-    dts_usb_endpoint_t *ep
-);
-void dts_usb_dev_control_transfer_setup1
-(
-    dts_usb_dev_t *usbd, 
-    dts_usb_endpoint_t *ep
-);
+#define bulk_callback_t dts_usb_bulk_callback_t
+#define bulk_set_in_endpoint dts_usb_bulk_set_in_endpoint
+#define bulk_set_out_endpoint dts_usb_bulk_set_out_endpoint
 
-#endif // DTS_USB_DEV_CONTROL_TRANSFER_H_
+#endif // BULK_TRANSFER_H_

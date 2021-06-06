@@ -28,15 +28,21 @@
 #define DTS_USB_COM_DEV_H_
 
 #include <dts_usb_dev.h>
-
-#pragma pack(1)
-# include <dts_usb_com_dev_line_coding.h>
-#pragma pack()
+#include <dts_usb_com_dev_line_coding.h>
+#include <dts_usb_misc.h>
 
 typedef struct
 {
     dts_usb_dev_t dev;
-    dts_usb_com_dev_line_coding_t *line_coding;
+    union {
+        dts_usb_com_dev_line_coding_t line_coding;
+    } u;
+
+    union {
+        #define bit(x) (1<<(x))
+        #define PSTN_EVENT_LINE_CODING_CHANGED bit(0)
+        dts_usb_event_t pstn;
+    } event;
 } dts_usb_com_dev_t;
 
 void dts_usb_com_dev_received

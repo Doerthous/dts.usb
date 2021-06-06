@@ -45,8 +45,6 @@ typedef struct dts_usb_dev {
     void (*endpoint_callback[16])(struct dts_usb_dev *usbd, dts_usb_endpoint_t *ep);
     dts_usb_endpoint_t ep[32];
 
-    void (*data_in_completed)(struct dts_usb_dev *usbd, dts_usb_endpoint_t *ep);
-    void (*data_out_completed)(struct dts_usb_dev *usbd, dts_usb_endpoint_t *ep);
     dts_usb_transfer_t transfer[16];
 
     void (*md_init)(struct dts_usb_dev *usbd);

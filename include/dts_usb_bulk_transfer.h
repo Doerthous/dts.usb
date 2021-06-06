@@ -24,13 +24,46 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#ifndef DTS_USB_BULK_TRANSFER_H_
+#define DTS_USB_BULK_TRANSFER_H_
 
-#include <dts_usb_com_dev_line_coding.h>
+#include <dts_usb.h>
+#include <dts_usb_dev.h>
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
+void dts_usb_bulk_transfer(dts_usb_dev_t *usb, dts_usb_endpoint_t *ep);
 
-#endif // LINE_CODING_H_
+size_t dts_usb_bulk_write
+(
+    dts_usb_dev_t *usb, 
+    int ep, 
+    uint8_t *data, 
+    size_t size
+);
+
+size_t dts_usb_bulk_read
+(
+    dts_usb_dev_t *usb, 
+    int ep, 
+    uint8_t *data, 
+    size_t size
+);
+
+
+
+typedef void (*dts_usb_bulk_callback_t)(dts_usb_dev_t *usb, int ep);
+// call this when set_configuration to set the given ep as a bulk in endpoint
+void dts_usb_bulk_set_in_endpoint
+(
+    dts_usb_dev_t *usb, 
+    int ep, 
+    dts_usb_bulk_callback_t callback
+);
+// call this when set_configuration to set the given ep as a bulk out endpoint
+void dts_usb_bulk_set_out_endpoint
+(
+    dts_usb_dev_t *usb, 
+    int ep, 
+    dts_usb_bulk_callback_t notifier
+);
+
+#endif // DTS_USB_BULK_TRANSFER_H_

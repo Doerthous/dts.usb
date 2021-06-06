@@ -53,7 +53,13 @@ typedef struct
 
     /* Data bits (5, 6, 7, 8 or 16)
     */
-    uint8_t bDataBits; 
+    uint8_t bDataBits;
+
+    //
+    uint8_t raw_data[7];
 } dts_usb_com_dev_line_coding_t;
+
+int dts_usb_com_dev_line_coding_unpack(dts_usb_com_dev_line_coding_t *coding);
+int dts_usb_com_dev_line_coding_pack(dts_usb_com_dev_line_coding_t *coding);
 
 #endif // DTS_USB_COM_DEV_LINE_CODING_H_

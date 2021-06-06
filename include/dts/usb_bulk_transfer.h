@@ -24,13 +24,18 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#ifndef USB_BULK_TRANSFER_H_
+#define USB_BULK_TRANSFER_H_
 
-#include <dts_usb_com_dev_line_coding.h>
+#include <dts_usb_bulk_transfer.h>
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
+#define usb_bulk_transfer dts_usb_bulk_transfer
 
-#endif // LINE_CODING_H_
+#define usb_bulk_write dts_usb_bulk_write
+#define usb_bulk_read dts_usb_bulk_read
+
+#define usb_bulk_callback_t dts_usb_bulk_callback_t
+#define usb_bulk_set_in_endpoint dts_usb_bulk_set_in_endpoint
+#define usb_bulk_set_out_endpoint dts_usb_bulk_set_out_endpoint
+
+#endif // USB_BULK_TRANSFER_H_

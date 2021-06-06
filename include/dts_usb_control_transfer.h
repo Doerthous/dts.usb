@@ -24,13 +24,60 @@
    Authour: Doerthous <doerthous@gmail.com>
 */
 
-#ifndef LINE_CODING_H_
-#define LINE_CODING_H_
+#ifndef DTS_USB_CONTROL_TRANSFER_H_
+#define DTS_USB_CONTROL_TRANSFER_H_
 
-#include <dts_usb_com_dev_line_coding.h>
+#include <dts_usb.h>
+#include <dts_usb_dev.h>
 
-#define line_coding_t dts_usb_com_dev_line_coding_t
-#define line_coding_unpack dts_usb_com_dev_line_coding_unpack
-#define line_coding_pack dts_usb_com_dev_line_coding_pack
+void dts_usb_control_transfer
+(
+    dts_usb_dev_t *usbd, 
+    dts_usb_endpoint_t *ep
+);
 
-#endif // LINE_CODING_H_
+typedef void (*dts_usb_ctrl_xfer_callback_t)
+(
+    dts_usb_dev_t *, 
+    dts_usb_endpoint_t *
+);
+
+// Actions
+void dts_usb_control_transfer_do_status_in
+(
+    dts_usb_dev_t *usbd,
+    dts_usb_endpoint_t *ep
+);
+void dts_usb_control_transfer_do_data_in
+(
+    dts_usb_dev_t *usbd,
+    dts_usb_endpoint_t *ep,
+    uint8_t *data,
+    size_t size
+);
+void dts_usb_control_transfer_do_data_out
+(
+    dts_usb_dev_t *usbd, 
+    dts_usb_endpoint_t *ep,
+    uint8_t *buff, 
+    size_t size
+);
+
+// Events
+void dts_usb_control_transfer_in
+(
+    dts_usb_dev_t *usbd, 
+    dts_usb_endpoint_t *ep
+);
+void dts_usb_control_transfer_out1
+(
+    dts_usb_dev_t *usbd, 
+    dts_usb_endpoint_t *ep
+);
+void dts_usb_control_transfer_setup1
+(
+    dts_usb_dev_t *usbd, 
+    dts_usb_endpoint_t *ep
+);
+
+#endif // DTS_USB_CONTROL_TRANSFER_H_
